@@ -42,6 +42,11 @@ switch ($ftype) {
         $out_file_name = "invoice_".date("Ymd_His")."_N_". $dognum.".docx";
         $valueToCheck = "Счет № %ddnumber% от %nowdate%";
         break;
+	case 'act':
+        $template_file_name = "act-calgelunion.docx";
+        $out_file_name = "act_".date("Ymd_His")."_N_". $dognum.".docx";
+        $valueToCheck = "Акт № %ddnumber% от %nowdate%";		
+        break;	
 	case 'tradeinvoice':
         $template_file_name = "invoice1.xlsx";
         //$out_file_name = "tradeinvoice_".date("Ymd_His")."_N_". $dognum.".xlsx";
@@ -49,6 +54,13 @@ switch ($ftype) {
         $valueToCheck = "Счет № %ddnumber% от %nowdate%";
 		@file_put_contents("now-wc.txt","tradeinvoice post:");
         break;	
+	case 'tradeact':
+        $template_file_name = "tradeact1.xlsx";
+        //$out_file_name = "tradeinvoice_".date("Ymd_His")."_N_". $dognum.".xlsx";
+		$out_file_name = "tradeact_".date("Ymd_His").".xlsx";
+        $valueToCheck = "Счет № %ddnumber% от %nowdate%";
+		@file_put_contents("now-wc.txt","tradeinvoice post:");
+        break;		
 }
 
 //error_reporting(E_ALL);
@@ -124,7 +136,7 @@ function recursive_remove_directory($directory, $empty = false) {
 		}
 		return true;
 	}
-function change_xlsx($file, $docname, $leadData) {
+function change_xlsx($file, $docname, $leadData, $ddtype) {
 	//@file_put_contents("now-wc.txt","point2:change_xlsx:".$docname,FILE_APPEND);
 	if (is_file('files/'.$docname)) unlink('files/'.$docname);
 	//if (!copy($file, 'files/'.$docname)) { } else {
@@ -155,7 +167,13 @@ function change_xlsx($file, $docname, $leadData) {
 		//$objPHPExcel->getActiveSheet()->mergeCells('A18:E22');
 
 		$objPHPExcel->setActiveSheetIndex(0);
-		$strB11val= "Счет №".$leadData['ddnumber'].' от '.$leadData['ddate'];
+		$dname = "";
+		if ($ddtype=='tradeact') {
+			$dname='Акт';
+		} else {
+			$dname='Счет';
+		}
+		$strB11val= $dname." №".$leadData['ddnumber'].' от '.$leadData['ddate'];
 		$objPHPExcel->getActiveSheet()->SetCellValue('B11', $strB11val);
 		$objPHPExcel->getActiveSheet()->SetCellValue('G17', "".$leadData['recieve']);
 		$objPHPExcel->getActiveSheet()->SetCellValue('G19', "".$leadData['recieve']);
@@ -289,12 +307,20 @@ if ($ftype == 'contract') {
     $leadData = $_POST;
     change_docx($template_file_name, $out_file_name, $leadData);
     $newfilename2412 = $out_file_name;
-} elseif($ftype == 'tradeinvoice') {
-	
+} elseif($ftype == 'act') {
+    $leadData = $_POST;
+    change_docx($template_file_name, $out_file_name, $leadData);
+    $newfilename2412 = $out_file_name;	
+} elseif($ftype == 'tradeinvoice') {	
 	$leadData = $_POST;
-    change_xlsx($template_file_name, $out_file_name, $leadData);
+    change_xlsx($template_file_name, $out_file_name, $leadData, $ftype);
     $newfilename2412 = $out_file_name;
-} else {
+} elseif($ftype =='tradeact') {
+	$leadData = $_POST;
+    change_xlsx($template_file_name, $out_file_name, $leadData, $ftype);
+    $newfilename2412 = $out_file_name;
+} 
+else {
     //3.2=========================================================================
    
 
@@ -350,7 +376,7 @@ if ($client->getAccessToken()) {
     //$file->setTitle($out_file_name);
     $file->setTitle($newfilename2412);
 
-    if (($ftype == 'contract') or ($ftype == 'invoice')) {
+    if (($ftype == 'contract') or ($ftype == 'invoice') or ($ftype == 'act')) {
         @file_put_contents("now-wc.txt","point2.1.1 contract",FILE_APPEND);
         //$newfilename2412
         //array(
@@ -391,7 +417,7 @@ if ($client->getAccessToken()) {
 }
 
 
-if (($ftype == 'contract') or ($ftype == 'invoice')) {
+if (($ftype == 'contract') or ($ftype == 'invoice') or ($ftype == 'act')) {
 	//docx
     if (!empty($result)){
         $link = array(
